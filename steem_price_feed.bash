@@ -46,6 +46,6 @@ while true ; do
     echo "sending feed ${price_percentage}% price: $price"
     curl -H "content-type: application/json" -X POST -d "{\"method\":\"publish_feed\",\"params\":[\"${account}\",{\"base\":\"${price} SBD\",\"quote\":\"1.000 STEEM\"},true],\"jsonrpc\": \"2.0\",\"id\":0}" localhost:8091
   fi
-  echo "${price_percentage}% | price: $price | time since last post: $update_diff
+  echo "${price_percentage}% | price: $price | time since last post: $update_diff"
   sleep $(shuf -i 1-15 | head -1)m
 done
