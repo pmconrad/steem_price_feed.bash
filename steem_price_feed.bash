@@ -160,5 +160,8 @@ while true ; do
     relock
   fi
   echo "${price_percentage}% | price: $price | time since last post: $update_diff"
-  sleep $(($RANDOM%60))m
+  wait="$(($RANDOM % 60)"
+  echo -n "Waiting until "
+  date --date=@"$(( $wait * 60 + $(date +%s) ))"
+  sleep "${wait}m"
 done
