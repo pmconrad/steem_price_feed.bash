@@ -16,12 +16,33 @@
 # 9:33 something along those lines
 # 9:33 if the price moves up we can manually adjust the feeds
 
-#your account name
-account=steempty
-
 #min and max price (usd), to exit script for manual intervention
 min_bound=0.25
 max_bound=1.5
+wallet=http://127.0.0.1:8092/rpc
+
+usage () {
+    cat 1>&2 <<__EOU__
+Usage: $0 -w|--witness <witness> [-m|--min <min-price>] [-M|--max <max-price>] [-r|--rpc-url <rpc-url>] [-v|--vote]
+-w sets the name of the witness whose price will be set (and optionally voted
+   from).
+-m and -M set the absolute maximum and minimum acceptable price. This script
+   will exit if the actual price exceeds these bounds. Defaults are $min_bound
+   and $max_bound, respectively.
+-r specifies the cli_wallet's HTTP-RPC URL. The default is $wallet.
+-v will make the given witness vote for the creators of this script, i. e.
+   cyrano.witness and steempty. If you have already voted you'll see an error
+   message if you vote again. That can be ignored.
+
+Hint: for slightly better security you should keep the cli_wallet locked at all
+times. In order to vote, this program needs to unlock the wallet. For this,
+create a file named "lock" in the current directory with read permission only
+for yourself, and paste the following JSON-RPC command into the "lock" file:
+{"id":0,"method":"unlock","params":["<your_password>"]}
+Obviously, you need to replace the placeholder with your actual password.
+__EOU__
+    exit 1
+}
 
 unlock () {
     if [ -r lock ]; then
@@ -39,9 +60,33 @@ relock () {
     fi
 }
 
+vote () {
+    unlock
+    curl -s --data-ascii '{"method":"vote_for_witness","params":["'"$account"'","cyrano.witness",true,true],"jsonrpc":"2.0","id":0}' "$wallet"
+    curl -s --data-ascii '{"method":"vote_for_witness","params":["'"$account"'","steempty",true,true],"jsonrpc":"2.0","id":0}' "$wallet"
+    relock
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+	-w|--witness) account="$2";   shift; ;;
+	-m|--min)     min_bound="$2"; shift; ;;
+	-M|--max)     max_bound="$2"; shift; ;;
+	-r|--rpc-url) wallet="$2";    shift; ;;
+	-v|--vote)    vote=yes;       ;;
+	*)	      usage;	      ;;
+    esac
+    shift
+done
+
+if [ -z "$account" ]; then usage; fi
+if [ "$vote" = yes ]; then vote; fi
+
+# Avoid problems with decimal separator
+export LANG=C
+
 get_wallet_price () {
-    curl --data-ascii '{"id":0,"method":"get_witness","params":["'"$account"'"]}
-' \
+    curl --data-ascii '{"id":0,"method":"get_witness","params":["'"$account"'"]}' \
 	 -s "$wallet" \
       | sed 's=[{,]=&\
 =g' \
@@ -52,8 +97,7 @@ get_wallet_price () {
 }
 
 get_last_update () {
-    local jtime="$(curl --data-ascii '{"id":0,"method":"get_witness","params":["
-'"$account"'"]}' \
+    local jtime="$(curl --data-ascii '{"id":0,"method":"get_witness","params":["'"$account"'"]}' \
 			-s "$wallet" \
 		     | sed 's=[{,]=&\
 =g' \
@@ -110,7 +154,7 @@ while true ; do
     last_feed=$now
     unlock
     echo "sending feed ${price_percentage}% price: $price"
-    curl -H "content-type: application/json" -X POST -d "{\"method\":\"publish_feed\",\"params\":[\"${account}\",{\"base\":\"${price} SBD\",\"quote\":\"1.000 STEEM\"},true],\"jsonrpc\": \"2.0\",\"id\":0}" localhost:8091
+    curl -H "content-type: application/json" -X POST -d "{\"method\":\"publish_feed\",\"params\":[\"${account}\",{\"base\":\"${price} SBD\",\"quote\":\"1.000 STEEM\"},true],\"jsonrpc\": \"2.0\",\"id\":0}" "$wallet"
     relock
   fi
   echo "${price_percentage}% | price: $price | time since last post: $update_diff"
