@@ -16,7 +16,6 @@
 # 9:33 something along those lines
 # 9:33 if the price moves up we can manually adjust the feeds
 
-last_feed=$((`date +%s`))
 #your account name
 account=steempty
 
@@ -40,6 +39,30 @@ relock () {
     fi
 }
 
+get_wallet_price () {
+    curl --data-ascii '{"id":0,"method":"get_witness","params":["'"$account"'"]}
+' \
+	 -s "$wallet" \
+      | sed 's=[{,]=&\
+=g' \
+      | grep -A 2 'sbd_exchange_rate' \
+      | grep '"base"' \
+      | cut -d\" -f 4 \
+      | sed 's= SBD==;s= STEEM=='
+}
+
+get_last_update () {
+    local jtime="$(curl --data-ascii '{"id":0,"method":"get_witness","params":["
+'"$account"'"]}' \
+			-s "$wallet" \
+		     | sed 's=[{,]=&\
+=g' \
+		     | grep '"last_sbd_exchange_update"' \
+		     | cut -d\" -f 4 \
+		     | sed 's= SBD==;s= STEEM==')"
+    date --date "${jtime}Z" +%s
+}
+
 function get_price {
   while true ; do
     price=$(printf '%.*f\n' 3 `curl https://www.cryptonator.com/api/ticker/steem-usd 2>/dev/null| cut -d"," -f3 | cut -d"\"" -f4 `)
@@ -52,15 +75,24 @@ function get_price {
   echo $price
 }
 
-init_price=`get_price`
+init_price="`get_wallet_price`"
+if [ "$init_price" = "" ]; then
+    echo "Empty price - wallet not running?" 1>&2
+    exit 1
+fi
+last_feed="`get_last_update`"
 
 while true ; do
   #check price
   price=`get_price`
   echo "price: $price" 
+  if [ "$price" = 0.000 ]; then
+    echo "Zero price - ignoring"
+    price="$init_price"
+  fi
   #check persentage
   price_diff=`echo "scale=3;${price}-${init_price}" | bc`
-  price_percentage=`echo "scale=3;${price_diff}/${init_price}*100" | bc | tr -d '-'`
+  price_percentage=`echo "scale=3;${price_diff}/${price}*100" | bc | tr -d '-'`
   now=`date +%s`
   update_diff=$(($now-$last_feed))
   #check bounds, exit script if more than 50% change, or minimum/maximum price bound
