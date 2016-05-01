@@ -136,8 +136,8 @@ while true ; do
     price="$init_price"
   fi
   #check persentage
-  price_diff="`echo "scale=3;${price}-${init_price}" | bc`"
-  price_percentage="`echo "scale=3;${price_diff}/${price}*100" | bc | tr -d '-'`"
+  price_permillage="`echo "scale=3; (${price} - ${init_price}) / ${price} * 1000" | bc | tr -d '-'`"
+  price_permillage="${price_permillage%.*}"
   now="`date +%s`"
   update_diff="$(($now-$last_feed))"
   #check bounds, exit script if more than 50% change, or minimum/maximum price bound
@@ -145,21 +145,21 @@ while true ; do
      echo "manual intervention (bound) $init_price $price, exiting"
      exit 1
   fi 
-  if [ "`echo "$price_percentage>50" | bc`" -gt 0 ] ; then
+  if [ "$price_permillage" -gt 500 ] ; then
      echo "manual intervention (percent) $init_price $price, exiting"
      exit 1
   fi 
   #check if to send update (once an hour maximum, 3% change minimum)
-  if [ "`echo "$price_percentage>3" | bc`" -gt 0 -a "$update_diff" -gt 3600 ] ; then
+  if [ "$price_permillage" -gt 30 -a "$update_diff" -gt 3600 ] ; then
     init_price="$price"
     last_feed="$now"
     unlock
-    echo "sending feed ${price_percentage}% price: $price"
+    echo "sending feed ${price_permillage}/10% price: $price"
     curl --data-ascii '{"method":"publish_feed","params":["'"$account"'",{"base":"'"$price"' SBD","quote":"1.000 STEEM"},true],"jsonrpc":"2.0","id":0}' \
 	 -s "$wallet"
     relock
   fi
-  echo "${price_percentage}% | price: $price | time since last post: $update_diff"
+  echo "${price_permillage}/10% | price: $price | time since last post: $update_diff"
   wait="$(($RANDOM % 60)"
   echo -n "Waiting until "
   date --date=@"$(( $wait * 60 + $(date +%s) ))"
