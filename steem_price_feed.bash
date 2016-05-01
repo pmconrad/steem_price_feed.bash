@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Price feed logic according to Dan:
+# Apr 27th
+# dan
+# 9:11 PM @clayop max frequency 1 hr, min frequency 7 days max change 3%
+# 9:11 also introduce some randomness in your queries
+# 9:11 that will prevent everyone from updating at the same time
+# 9:12 err.. min change 3% :simple_smile:
+# 9:12 you can pick what ever percent you want, these are just my opinion on how to minimize network load while still serving the purpose effectively
+# 9:23 PM the range for manual intervention should be +/- 50%
+# 9:32 PM +/- 50% of HARD CODED long term average
+# 9:32 PM I don't think the safety nets should be a percent of a past value...
+# 9:32 yes.. so right now between .0005 and .002 SATS
+# 9:33 $0.25 and $1.50
+# 9:33 something along those lines
+# 9:33 if the price moves up we can manually adjust the feeds
+
 last_feed=$((`date +%s`))
 #your account name
 account=steempty
