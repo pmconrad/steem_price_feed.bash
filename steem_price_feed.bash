@@ -149,8 +149,9 @@ while true ; do
      echo "manual intervention (percent) $init_price $price, exiting"
      exit 1
   fi 
-  #check if to send update (once an hour maximum, 3% change minimum)
-  if [ "$price_permillage" -gt 30 -a "$update_diff" -gt 3600 ] ; then
+  #check if to send update (once an hour maximum, 3% change minimum, 1/48 hours minimum)
+  if [ "$price_permillage" -gt 30 -a "$update_diff" -gt 3600 \
+	-o "$update_diff" -gt 172600 ] ; then
     init_price="$price"
     last_feed="$now"
     unlock
