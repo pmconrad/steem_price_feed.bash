@@ -24,6 +24,22 @@ account=steempty
 min_bound=0.25
 max_bound=1.5
 
+unlock () {
+    if [ -r lock ]; then
+	echo -n "Unlocking wallet..."
+	curl -s --data-ascii @lock "$wallet"
+	echo ""
+    fi
+}
+
+relock () {
+    if [ -r lock ]; then
+	echo -n "Re-locking wallet..."
+	curl -s --data-ascii '{"id":0,"method":"lock","params":[]}' "$wallet"
+	echo ""
+    fi
+}
+
 function get_price {
   while true ; do
     price=$(printf '%.*f\n' 3 `curl https://www.cryptonator.com/api/ticker/steem-usd 2>/dev/null| cut -d"," -f3 | cut -d"\"" -f4 `)
@@ -60,8 +76,10 @@ while true ; do
   if [ `echo "$price_percentage>3" | bc` -gt 0 -a $update_diff -gt 3600 ] ; then
     init_price=$price
     last_feed=$now
+    unlock
     echo "sending feed ${price_percentage}% price: $price"
     curl -H "content-type: application/json" -X POST -d "{\"method\":\"publish_feed\",\"params\":[\"${account}\",{\"base\":\"${price} SBD\",\"quote\":\"1.000 STEEM\"},true],\"jsonrpc\": \"2.0\",\"id\":0}" localhost:8091
+    relock
   fi
   echo "${price_percentage}% | price: $price | time since last post: $update_diff"
   sleep $(($RANDOM%60))m
