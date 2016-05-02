@@ -106,8 +106,13 @@ get_last_update () {
 }
 
 function get_price {
-  while true ; do
-    price="$(printf "%0.3f" "$(curl -s https://www.cryptonator.com/api/ticker/steem-usd \
+  while true ; do 
+    while true ; do
+       price_fetch=`curl -s https://www.cyptonator.com/api/ticker/steem-usd 2>/dev/null`
+       [ $? -eq 0 ] && break
+       sleep 1m
+    done
+    price="$(printf "%0.3f" "$($price_fetch \
 				 | tr , "\n" \
 				 | grep '"price"' \
 				 | cut -d\" -f 4)" )"
