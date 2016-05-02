@@ -112,7 +112,7 @@ function get_price {
        [ $? -eq 0 ] && break
        sleep 1m
     done
-    price="$(printf "%0.3f" "$($price_fetch \
+    price="$(printf "%0.3f" "$(echo $price_fetch \
 				 | tr , "\n" \
 				 | grep '"price"' \
 				 | cut -d\" -f 4)" )"
