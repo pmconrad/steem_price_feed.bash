@@ -17,7 +17,7 @@
 # 9:33 if the price moves up we can manually adjust the feeds
 
 #min and max price (usd), to exit script for manual intervention
-min_bound=0.25
+min_bound=0.2
 max_bound=1.5
 wallet=http://127.0.0.1:8092/rpc
 
