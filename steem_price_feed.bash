@@ -108,7 +108,7 @@ get_last_update () {
 function get_price {
   while true ; do 
     while true ; do
-       price_fetch=`curl -s https://www.cryptonator.com/api/ticker/steem-usd 2>/dev/null`
+       price_fetch=`curl -s https://www.cryptonator.com/api/full/steem-usd 2>/dev/null`
        [ $? -eq 0 ] && break
        sleep 1m
     done
