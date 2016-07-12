@@ -18,7 +18,7 @@
 
 #min and max price (usd), to exit script for manual intervention
 min_bound=0.2
-max_bound=1.5
+max_bound=2.0
 wallet=http://127.0.0.1:8092/rpc
 
 usage () {
