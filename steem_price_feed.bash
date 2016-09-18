@@ -16,9 +16,11 @@
 # 9:33 something along those lines
 # 9:33 if the price moves up we can manually adjust the feeds
 
+# 2016-09-18: added reduction of 10% from price feed, for trying to improve pegging
+
 #min and max price (usd), to exit script for manual intervention
-min_bound=0.2
-max_bound=2.0
+min_bound=0.1
+max_bound=10.0
 wallet=http://127.0.0.1:8092/rpc
 
 usage () {
@@ -122,7 +124,9 @@ function get_price {
     fi
     sleep 1m
   done
-  echo "$price"
+  #reduction of 10%
+  price=`echo "scale=3; ${price}-${price}*10/100" | bc`
+  echo "0${price}"
 }
 
 init_price="`get_wallet_price`"
