@@ -77,7 +77,7 @@ while [ $# -gt 0 ]; do
 	-M|--max)     max_bound="$2"; shift; ;;
 	-r|--rpc-url) wallet="$2";    shift; ;;
 	-d|--deduct-percentage  deduct_percentage="${2//[^0-9]/}";   shift; ;;
-	-v|--vote)    vote=yes;       shift; ;;
+	-v|--vote)    vote=yes;       ;;
 	*)	      usage;	      ;;
     esac
     shift
