@@ -25,13 +25,14 @@ wallet=http://127.0.0.1:8092/rpc
 
 usage () {
     cat 1>&2 <<__EOU__
-Usage: $0 -w|--witness <witness> [-m|--min <min-price>] [-M|--max <max-price>] [-r|--rpc-url <rpc-url>] [-v|--vote]
+Usage: $0 -w|--witness <witness> [-m|--min <min-price>] [-M|--max <max-price>] [-r|--rpc-url <rpc-url>] [-d|--deduct-percentage <percentage>] [-v|--vote]
 -w sets the name of the witness whose price will be set (and optionally voted
    from).
 -m and -M set the absolute maximum and minimum acceptable price. This script
    will exit if the actual price exceeds these bounds. Defaults are $min_bound
    and $max_bound, respectively.
 -r specifies the cli_wallet's HTTP-RPC URL. The default is $wallet.
+-d deducts percentage of the price feed from original price, write the percentage wanted.
 -v will make the given witness vote for the creators of this script, i. e.
    cyrano.witness and steempty. If you have already voted you'll see an error
    message if you vote again. That can be ignored.
@@ -75,7 +76,8 @@ while [ $# -gt 0 ]; do
 	-m|--min)     min_bound="$2"; shift; ;;
 	-M|--max)     max_bound="$2"; shift; ;;
 	-r|--rpc-url) wallet="$2";    shift; ;;
-	-v|--vote)    vote=yes;       ;;
+	-d|--deduct-percentage  deduct_percentage="${2//[^0-9]/}";   shift; ;;
+	-v|--vote)    vote=yes;       shift; ;;
 	*)	      usage;	      ;;
     esac
     shift
@@ -124,8 +126,8 @@ function get_price {
     fi
     sleep 1m
   done
-  #reduction of 10%
-  price=`echo "scale=3; ${price}-${price}*10/100" | bc`
+  #reduction of percentage from feed
+  price=`echo "scale=3; ${price}-${price}*${deduct_percentage}/100" | bc`
   echo "0${price}"
 }
 
