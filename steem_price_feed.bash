@@ -21,6 +21,7 @@
 #min and max price (usd), to exit script for manual intervention
 min_bound=0.1
 max_bound=10.0
+deduct_percentage=0
 wallet=http://127.0.0.1:8092/rpc
 
 usage () {
@@ -76,7 +77,7 @@ while [ $# -gt 0 ]; do
 	-m|--min)     min_bound="$2"; shift; ;;
 	-M|--max)     max_bound="$2"; shift; ;;
 	-r|--rpc-url) wallet="$2";    shift; ;;
-	-d|--deduct-percentage  deduct_percentage="${2//[^0-9]/}";   shift; ;;
+	-d|--deduct-percentage) deduct_percentage="${2//[^0-9]/}";   shift; ;;
 	-v|--vote)    vote=yes;       ;;
 	*)	      usage;	      ;;
     esac
@@ -146,7 +147,7 @@ while true ; do
     echo "Zero price - ignoring"
     price="$init_price"
   fi
-  #check persentage
+  #check percentage
   price_permillage="`echo "scale=3; (${price} - ${init_price}) / ${price} * 1000" | bc | tr -d '-'`"
   price_permillage="${price_permillage%.*}"
   now="`date +%s`"
