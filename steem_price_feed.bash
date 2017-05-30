@@ -21,12 +21,17 @@
 #min and max price (usd), to exit script for manual intervention
 min_bound=0.1
 max_bound=10.0
+# Bias
 deduct_percentage=0
+# Maximum relative change
+max_price_permil_default=250
+max_price_permil=$max_price_permil_default
+# Wallet URL
 wallet=http://127.0.0.1:8092/rpc
 
 usage () {
     cat 1>&2 <<__EOU__
-Usage: $0 -w|--witness <witness> [-m|--min <min-price>] [-M|--max <max-price>] [-r|--rpc-url <rpc-url>] [-d|--deduct-percentage <percentage>] [-v|--vote]
+Usage: $0 -w|--witness <witness> [-m|--min <min-price>] [-M|--max <max-price>] [-r|--rpc-url <rpc-url>] [-d|--deduct-percentage <percentage>] [-v|--vote] [-P <max-pct>]
 -w sets the name of the witness whose price will be set (and optionally voted
    from).
 -m and -M set the absolute maximum and minimum acceptable price. This script
@@ -37,6 +42,8 @@ Usage: $0 -w|--witness <witness> [-m|--min <min-price>] [-M|--max <max-price>] [
 -v will make the given witness vote for the creators of this script, i. e.
    cyrano.witness and steempty. If you have already voted you'll see an error
    message if you vote again. That can be ignored.
+-P allows a one-time deviation from the maximum relative price change ($(($max_price_permil / 1000)))%
+   The argument must be an integral percentage.
 
 Hint: for slightly better security you should keep the cli_wallet locked at all
 times. In order to vote, this program needs to unlock the wallet. For this,
@@ -79,6 +86,7 @@ while [ $# -gt 0 ]; do
 	-r|--rpc-url) wallet="$2";    shift; ;;
 	-d|--deduct-percentage) deduct_percentage="${2//[^0-9]/}";   shift; ;;
 	-v|--vote)    vote=yes;       ;;
+	-P)	      max_price_permil="$2"0; shift; ;;
 	*)	      usage;	      ;;
     esac
     shift
@@ -157,9 +165,12 @@ while true ; do
      echo "manual intervention (bound) $init_price $price, exiting"
      exit 1
   fi 
-  if [ "$price_permillage" -gt 500 ] ; then
-     echo "manual intervention (percent) $init_price $price, exiting"
-     exit 1
+  if [ "$price_permillage" -gt "$max_price_permil_default" ] ; then
+    if [ "$price_permillage" -gt "$max_price_permil" ] ; then
+      echo "manual intervention (percent) $init_price $price, exiting"
+      exit 1
+    fi
+    max_price_permil="$max_price_permil_default"
   fi 
   #check if to send update (once an hour maximum, 3% change minimum, 1/48 hours minimum)
   if [ "$price_permillage" -gt 30 -a "$update_diff" -gt 3600 \
